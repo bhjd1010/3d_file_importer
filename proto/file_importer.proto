@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package file_importer;
+
+// service definition.
+service FileImporter {
+  rpc Import3dFile(ImportFileRequest) returns(ImportFileResponse) {}
+}
+
+
+message Pt3d
+{
+  double x = 1;
+  double y = 2;
+  double z = 3;
+}
+
+message Pt2d
+{
+  double x = 1;
+  double y = 2;
+}
+
+message ImportFileRequest{
+  string filePath = 1;
+}
+
+message MeshData{
+  repeated Pt3d points = 1;
+  repeated int32 indices = 2;
+  repeated Pt2d uvs = 3;
+  repeated Pt3d normals = 4;
+}
+
+message ImportFileResponse{
+  repeated MeshData meshDataArr = 1;
+}
