@@ -29,7 +29,7 @@ class FileImporterServiceImpl final : public FileImporter::Service {
         std::filesystem::path filePath(request->filepath());
         auto extension = filePath.extension();
         std::vector<MeshData> meshDataArr;
-        if (extension.string() == ".step" || extension.string() == ".STEP") {
+        if (extension.string() == ".step" || extension.string() == ".STEP" || extension.string() == ".stp" || extension.string() == ".STP") {
             meshDataArr = fileImportFactory->CreateFileImporter(EFileTypes::Step)->Import(request->filepath());
         } else if (extension.string() == ".stl" || extension.string() == ".STL") {
             meshDataArr = fileImportFactory->CreateFileImporter(EFileTypes::Stl)->Import(request->filepath());
