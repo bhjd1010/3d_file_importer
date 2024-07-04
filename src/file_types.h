@@ -9,5 +9,6 @@ enum class EFileTypes {
     Stl,
     Obj,
     Iges,
+    Gltf
 
 };

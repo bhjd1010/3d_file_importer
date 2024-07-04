@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include "file_importer.h"
+#include "occ_importer.h"
 #include <string>
 
-class ObjImporter : public IFileImporter {
+class ObjImporter : public OccImporter {
 public:
     std::vector<MeshData> Import(const std::string &path) override;
 

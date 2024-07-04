@@ -6,6 +6,7 @@
 #include "step_importer.h"
 #include "stl_importer.h"
 #include "obj_importer.h"
+#include "gltf_importer.h"
 
 using namespace std;
 
@@ -18,6 +19,8 @@ FileImporterFactory::CreateFileImporter(EFileTypes type) {
             return make_unique<StlImporter>();
         case EFileTypes::Obj:
             return make_unique<ObjImporter>();
+        case EFileTypes::Gltf:
+            return make_unique<GltfImporter>();
         default:
             return nullptr;
     }

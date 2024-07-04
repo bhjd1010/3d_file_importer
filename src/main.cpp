@@ -35,6 +35,8 @@ class FileImporterServiceImpl final : public FileImporter::Service {
             meshDataArr = fileImportFactory->CreateFileImporter(EFileTypes::Stl)->Import(request->filepath());
         } else if (extension.string() == ".obj" || extension.string() == ".OBJ") {
             meshDataArr = fileImportFactory->CreateFileImporter(EFileTypes::Obj)->Import(request->filepath());
+        } else if (extension.string() == ".glb" || extension.string() == ".gltf") {
+            meshDataArr = fileImportFactory->CreateFileImporter(EFileTypes::Gltf)->Import(request->filepath());
         } else {
             return Status::CANCELLED;
         }

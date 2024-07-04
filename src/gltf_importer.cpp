@@ -3,41 +3,41 @@
 //
 #include <iostream>
 #include <optional>
-#include "step_importer.h"
+#include "gltf_importer.h"
 #include <BRepMesh_IncrementalMesh.hxx>
 #include <BRep_Tool.hxx>
 #include <STEPControl_Reader.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
 #include <BRepAdaptor_Surface.hxx>
+#include <TDocStd_Document.hxx>
+#include <RWGltf_CafReader.hxx>
 #include "XCAFDoc_DocumentTool.hxx"
-
+#include <TopExp.hxx>
 using namespace std;
 
-std::vector<MeshData> StepImporter::Import(const std::string &path) {
+std::vector<MeshData> GltfImporter::Import(const std::string &path) {
     std::vector<MeshData> meshDataArr;
-    STEPControl_Reader readerBase;
-    auto readResult = readerBase.ReadFile(path.c_str());
-    readerBase.TransferRoots();
-    if (readResult != IFSelect_ReturnStatus::IFSelect_RetDone) {
+
+
+    auto doc = new TDocStd_Document("gltf_doc");
+    auto gltf_reader = RWGltf_CafReader();
+    gltf_reader.SetDocument(doc);
+//gltf_reader.SetParallel(True)
+//gltf_reader.SetDoublePrecision(True)
+//gltf_reader.SetToSkipLateDataLoading(True)
+//gltf_reader.SetToKeepLateData(True)
+//gltf_reader.SetToPrintDebugMessages(True)
+//gltf_reader.SetLoadAllScenes(True)
+    auto status = gltf_reader.Perform(path.c_str(), Message_ProgressRange());
+
+    if(status != IFSelect_RetDone){
         return meshDataArr;
     }
+    auto shp = gltf_reader.SingleShape();
     std::vector<TopoDS_Shape> shapes;
-    for (int shapeIdx = 1; shapeIdx <= readerBase.NbShapes(); ++shapeIdx) {
-        auto shape = readerBase.Shape(shapeIdx);
-        AddShape(shape, shapes);
+    AddShape(shp, shapes);
 
-//        if (!shape.IsNull() && shape.ShapeType() == TopAbs_ShapeEnum::TopAbs_COMPOUND) {
-//            TopExp_Explorer aSolidExplorer(shape, TopAbs_SOLID);
-//            while (aSolidExplorer.More()) {
-//                auto child = aSolidExplorer.Current();
-//                shapes.push_back(child);
-//                aSolidExplorer.Next();
-//            }
-//        } else {
-//            shapes.push_back(shape);
-//        }
-    }
     for (auto &shape: shapes) {
         MeshData meshData;
         BRepMesh_IncrementalMesh mesh(shape, 0.1);
@@ -46,12 +46,6 @@ std::vector<MeshData> StepImporter::Import(const std::string &path) {
         }
         for (TopExp_Explorer ex(shape, TopAbs_FACE); ex.More(); ex.Next()) {
             const TopoDS_Face &face = TopoDS::Face(ex.Current());
-            BRepAdaptor_Surface BASur(face);
-            GeomAbs_SurfaceType type = BASur.GetType();
-            if (type != GeomAbs_Plane)
-            {
-                cerr << "face is not plane type, is: " << type << endl;
-            }
             auto faceOrientation = face.Orientation();
             TopLoc_Location location;
             Handle_Poly_Triangulation triangulation =
@@ -120,4 +114,31 @@ std::vector<MeshData> StepImporter::Import(const std::string &path) {
         meshDataArr.emplace_back(std::move(meshData));
     }
     return meshDataArr;
+}
+
+void GltfImporter::AddShape(const TopoDS_Shape &inShape, vector<TopoDS_Shape> &outShapes) {
+    if (inShape.IsNull())
+        return;
+    if (inShape.ShapeType() == TopAbs_ShapeEnum::TopAbs_COMPOUND) {
+        TopExp_Explorer aSolidExplorer(inShape, TopAbs_SOLID);
+        bool shapeOrShell = false;
+        while (aSolidExplorer.More()) {
+            shapeOrShell = true;
+            const auto& child = aSolidExplorer.Current();
+            AddShape(child, outShapes);
+            aSolidExplorer.Next();
+        }
+        TopExp_Explorer aShellExplorer(inShape, TopAbs_SHELL);
+        while (aShellExplorer.More()) {
+            shapeOrShell = true;
+            const auto& child = aShellExplorer.Current();
+            AddShape(child, outShapes);
+            aShellExplorer.Next();
+        }
+        if(!shapeOrShell){
+            outShapes.push_back(inShape);
+        }
+    } else {
+        outShapes.push_back(inShape);
+    }
 }
