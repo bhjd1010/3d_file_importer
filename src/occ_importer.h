@@ -11,5 +11,14 @@
 class OccImporter : public IFileImporter {
 protected:
     void AddShape(const TopoDS_Shape& inShape, std::vector<TopoDS_Shape>& outShapes);
+
+    MeshData GetShapeMeshData(const TopoDS_Shape &shape);
+};
+
+struct OccMeshData {
+    std::vector<gp_Pnt> points;
+    std::vector<gp_Pnt2d> uvs;
+    std::vector<gp_Dir> normals;
+    std::vector<int> indices;
 };
 

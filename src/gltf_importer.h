@@ -11,8 +11,4 @@
 class GltfImporter : public OccImporter {
 public:
     std::vector<MeshData> Import(const std::string &path) override;
-
-private:
-    void AddShape(const TopoDS_Shape& inShape, std::vector<TopoDS_Shape>& outShapes);
-
 };

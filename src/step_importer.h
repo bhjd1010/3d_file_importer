@@ -11,4 +11,5 @@
 class StepImporter : public OccImporter {
 public:
     std::vector<MeshData> Import(const std::string &path) override;
+
 };

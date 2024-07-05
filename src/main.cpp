@@ -72,5 +72,8 @@ void RunServer() {
 
 int main(int argc, char **argv) {
     RunServer();
+//    std::string path = "E:/Epic Games/UE_5.2_Projects/EditorPlatform/2CylinderEngine.glb";
+//    auto fileImportFactory = std::make_unique<FileImporterFactory>();
+//    auto res = fileImportFactory->CreateFileImporter(EFileTypes::Gltf)->Import(path);
     return 0;
 }
