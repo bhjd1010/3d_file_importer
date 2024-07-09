@@ -12,6 +12,8 @@
 #include <BRepAdaptor_Surface.hxx>
 #include "XCAFDoc_DocumentTool.hxx"
 
+#include "timer/PerformanceTimer.h"
+#include "spdlog/spdlog.h"
 using namespace std;
 
 std::vector<MeshData> StepImporter::Import(const std::string &path) {
@@ -27,8 +29,11 @@ std::vector<MeshData> StepImporter::Import(const std::string &path) {
         auto shape = stepReader.Shape(shapeIdx);
         AddShape(shape, shapes);
     }
+    PerformanceTimer getShapeMeshDataTimer(true);
     for (auto &shape: shapes) {
         meshDataArr.emplace_back(GetShapeMeshData(shape));
     }
+    getShapeMeshDataTimer.End();
+    spdlog::info("file: {} get shape mesh data spend: {}", path, getShapeMeshDataTimer.Duration());
     return meshDataArr;
 }

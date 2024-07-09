@@ -13,6 +13,8 @@
 #include "file_importer.grpc.pb.h"
 #include "file_importer_factory.h"
 #include "file_importer.h"
+#include "timer/PerformanceTimer.h"
+#include "spdlog/spdlog.h"
 
 using file_importer::FileImporter;
 using file_importer::ImportFileRequest;
@@ -29,7 +31,10 @@ class FileImporterServiceImpl final : public FileImporter::Service {
         std::filesystem::path filePath(request->filepath());
         auto extension = filePath.extension();
         std::vector<MeshData> meshDataArr;
-        if (extension.string() == ".step" || extension.string() == ".STEP" || extension.string() == ".stp" || extension.string() == ".STP") {
+        PerformanceTimer timer;
+        timer.Start();
+        if (extension.string() == ".step" || extension.string() == ".STEP" || extension.string() == ".stp" ||
+            extension.string() == ".STP") {
             meshDataArr = fileImportFactory->CreateFileImporter(EFileTypes::Step)->Import(request->filepath());
         } else if (extension.string() == ".stl" || extension.string() == ".STL") {
             meshDataArr = fileImportFactory->CreateFileImporter(EFileTypes::Stl)->Import(request->filepath());
@@ -40,14 +45,20 @@ class FileImporterServiceImpl final : public FileImporter::Service {
         } else {
             return Status::CANCELLED;
         }
-        for(const auto& meshData : meshDataArr){
-            file_importer::MeshData* _meshData = response->add_meshdataarr();
+        timer.End();
+        spdlog::info("import file: {} spend: {} ms", filePath.string(), timer.Duration());
+        int64_t pointCount = 0, triangleCount = 0;
+        for (const auto &meshData: meshDataArr) {
+            pointCount += static_cast<int64_t>(meshData.points.size());
+            triangleCount += static_cast<int64_t>(meshData.indices.size() / 3);
+            file_importer::MeshData *_meshData = response->add_meshdataarr();
             _meshData->mutable_points()->Add(meshData.points.begin(), meshData.points.end());
             _meshData->mutable_indices()->Add(meshData.indices.begin(), meshData.indices.end());
             _meshData->mutable_uvs()->Add(meshData.uvs.begin(), meshData.uvs.end());
             _meshData->mutable_normals()->Add(meshData.normals.begin(), meshData.normals.end());
-
         }
+        spdlog::info("file: {} part count: {}; point count: {}; triangle count: {}", filePath.string(),
+                     meshDataArr.size(), pointCount, triangleCount);
         return Status::OK;
     }
 
